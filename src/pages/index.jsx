@@ -37,27 +37,8 @@ export default function Home() {
         console.error('Error fetching users:', error);
       }
     };
-  
-    //Files
-    // const handleFileUpload = async (e) => {
-    //   e.preventDefault();
-    //   if (!selectedFile) return;
-  
-    //   const formData = new FormData();
-    //   formData.append('file', selectedFile);
-  
-    //   try {
-    //     const res = await fetch('/api/upload', {
-    //       method: 'POST',
-    //       body: formData,
-    //     });
-    //     const data = await res.json();
-    //     alert('File uploaded successfully!');
-    //   } catch (error) {
-    //     console.error('Error uploading file:', error);
-    //   }
-    // };
 
+    //Files
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         setSelectedFile(file);
@@ -109,7 +90,11 @@ export default function Home() {
             onChange={handleFileChange}
             className="mb-2"
           />
-          {preview && <img src={preview} alt="Preview"></img>}
+          {preview && <img 
+                            src={preview}  
+                            className="w-64 h-64 object-contain mx-auto"
+                            width={256}
+                            height={256} alt="Preview"></img>}
           <button
             type="submit"
             className="btn btn-secondary py-2 px-4 bg-blue-400 hover:bg-blue-700 rounded-md text-white font-bold"
