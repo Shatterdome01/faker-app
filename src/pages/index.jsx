@@ -1,4 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
+import jsPDF from "jspdf";
+import autoTable from 'jspdf-autotable';
 import { useState, useEffect } from "react";
+//import { DownloadIcon } from '@heroicons/react/outline';
 import 'tailwindcss/tailwind.css';
 
 export default function Home() {
@@ -7,8 +11,11 @@ export default function Home() {
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [total, setTotal] = useState(0);
+    // Add Files
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
+    // PDF
+    const [loading, setLoading] =useState(false);
   
     //Users
     const generateUser = async () => {
@@ -29,8 +36,9 @@ export default function Home() {
   
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`/api/users?page=${page}&limit=${limit}`);
-        const data = await res.json();
+        const res = await fetch(`/api/users?page=${page}&limit=${limit}`); 
+        const data = await res.json();//endpoint
+        console.log(data)
         setUsers(data.users);
         setTotal(data.total);
       } catch (error) {
@@ -74,6 +82,80 @@ export default function Home() {
           alert('File upload failed');
         }
       };
+
+      //PDF
+      const handlerDownload = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch('/api/users?page=1&limit=1000');
+          const data = await response.json();
+
+          if (!data.users || !Array.isArray(data.users)) {
+            throw new Error('Los datos no son un array');
+          }
+
+          const users = data.users;
+
+          const doc = new jsPDF();
+
+          const title = 'Users List';
+          const pageWidth = doc.internal.pageSize.getWidth(); //Ancho de la página
+          const textWidth = doc.getTextWidth(title); //texto
+          const x = (pageWidth - textWidth) / 2;
+          doc.setFontSize(18);
+          doc.text(title, x , 20);
+          doc.setFont('helvetica', 'bold')
+
+          doc.setFontSize(12);
+          //let y = 20;
+          const tableData = users.map((user, index) => [
+            index + 1,
+            user.name,
+            user.email, 
+            user.doc, 
+          ]);
+    
+          autoTable(doc, {
+            head: [['#', 'Name', 'Email', 'Document']], 
+            body: tableData,
+            startY: 30, 
+            theme: 'grid', 
+            styles: {
+              font: 'helvetica',
+              fontSize: 10,
+              cellPadding: 3,
+            },
+            headStyles: {
+              fillColor: [244, 114, 182], 
+              textColor: [255, 255, 255], 
+              fontSize: 12,
+              fontStyle: 'bold',
+            },
+            bodyStyles: {
+              textColor: [0, 0, 0], // Color del texto en el cuerpo
+            },
+            alternateRowStyles: {
+              fillColor: [240, 240, 240], // Color alternado de las filas
+            },
+          });
+
+          // const tableData = users.forEach((user, index) => {
+          //   doc.text(`${index + 1}. Name: ${user.name}, Email: ${user.email}, Path: ${user.doc}`, 10, y);
+          //   y += 10;
+          //   if(y > 280){
+          //     doc.addPage();
+          //     y = 10;
+          //   }
+          // });
+           doc.save('reporte.pdf');
+        }
+        catch(error){
+          console.log('Error to generate PDF: ', error );
+        } 
+        finally {
+          setLoading(false);
+        }
+      }
 
   
     useEffect(() => {
@@ -137,7 +219,7 @@ export default function Home() {
             <option value={50}>50</option>
           </select>
         </div>
-  
+  {/* {pdf} */}
         <table className="table-auto border-collapse border border-gray-300 w-full text-center">
           <thead>
             <tr>
@@ -156,6 +238,26 @@ export default function Home() {
             ))}
           </tbody>
         </table>
+
+        <div className="flex justify-center items-center h-20 ">
+          <button className="btn btn-secondary bg-green-500 text-white hover:bg-green-800 rounded py-2 px-2 flex items-center space-x-2" onClick={handlerDownload} disabled={loading}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6" 
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            {loading ? 'Generating..,' : 'Download PDF'}
+          </button>
+        </div>
   
         <div className="flex gap-2 mt-4 flex justify-center items-center h-20">
           <button
