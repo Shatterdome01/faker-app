@@ -2,7 +2,6 @@
 import jsPDF from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { useState, useEffect } from "react";
-//import { DownloadIcon } from '@heroicons/react/outline';
 import 'tailwindcss/tailwind.css';
 
 export default function Home() {
@@ -16,6 +15,9 @@ export default function Home() {
     const [preview, setPreview] = useState(null);
     // PDF
     const [loading, setLoading] =useState(false);
+    //Search
+    const [search, setSearch] = useState('');
+    const [filter, setFilter] = useState([]);
   
     //Users
     const generateUser = async () => {
@@ -40,11 +42,39 @@ export default function Home() {
         const data = await res.json();//endpoint
         console.log(data)
         setUsers(data.users);
+        setFilter(data.users);  
         setTotal(data.total);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
     };
+
+    const handleSearch = (e) => {
+      const value = e.target.value;
+      setSearch(value);
+    
+      if (value === '') {
+        setFilter(users);  
+      } else {
+        const filteredUsers = users.filter(user => {
+          const nameMatch = user.name && user.name.toLowerCase().includes(value.toLowerCase());
+          const emailMatch = user.email && user.email.toLowerCase().includes(value.toLowerCase());
+          return nameMatch || emailMatch;
+        });
+        setFilter(filteredUsers);  
+      }
+    };
+
+    // const handleSearch = async (e) => {
+    //   setSearch(e.target.value);
+
+    // const filteredUsers = users.filter( user => 
+    //   user.name.toLowerCase().includes(search.toLowerCase()) ||
+    //   user.email.toLowerCase().includes(search.toLowerCase())
+    // )
+    // console.log(filteredUsers);
+    // setFilter(filteredUsers);
+    //  }
 
     //Files
     const handleFileChange = (e) => {
@@ -107,7 +137,6 @@ export default function Home() {
           doc.setFont('helvetica', 'bold')
 
           doc.setFontSize(12);
-          //let y = 20;
           const tableData = users.map((user, index) => [
             index + 1,
             user.name,
@@ -139,14 +168,6 @@ export default function Home() {
             },
           });
 
-          // const tableData = users.forEach((user, index) => {
-          //   doc.text(`${index + 1}. Name: ${user.name}, Email: ${user.email}, Path: ${user.doc}`, 10, y);
-          //   y += 10;
-          //   if(y > 280){
-          //     doc.addPage();
-          //     y = 10;
-          //   }
-          // });
            doc.save('reporte.pdf');
         }
         catch(error){
@@ -193,6 +214,11 @@ export default function Home() {
             Generate User
           </button>
         </div>
+
+        {/**SEARCH INPUT  */}
+        <div className="flex justify-center items-center h-20">
+          <input type="text" value={search} onChange={handleSearch} placeholder="Search..." className="border border-gray-300 p-2 rounded-md" />
+        </div>
   
         {user && (
           <div>
@@ -220,6 +246,7 @@ export default function Home() {
           </select>
         </div>
   {/* {pdf} */}
+
         <table className="table-auto border-collapse border border-gray-300 w-full text-center">
           <thead>
             <tr>
@@ -229,13 +256,20 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
+            {filter.length > 0 ? (
+              filter.map((user) => (
+                <tr key={user.id}>
                 <td className="border border-gray-300 px-4 py-2">{user.name}</td>
                 <td className="border border-gray-300 px-4 py-2">{user.email}</td>
                 <td className="border border-gray-300 px-4 py-2">{user.doc}</td>
               </tr>
-            ))}
+              )
+            )) : (
+              <tr>
+                <td colSpan="3" className="border border-gray-300 px-4 py-2">No se encontraron coincidencias</td>
+              </tr>
+            )
+           }
           </tbody>
         </table>
 

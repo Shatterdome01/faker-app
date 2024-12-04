@@ -55,8 +55,7 @@ export default async function handler(req, res) {
     const { page = 1, limit = 10 } = req.query;     
     const pageInt = parseInt(page, 10);
     const limitInt = parseInt(limit, 10);
-
-  
+    
   if (isNaN(pageInt) || isNaN(limitInt) || pageInt < 1 || limitInt < 1) {
     return res.status(400).json({ error: 'Invalid page or limit' });
   }
